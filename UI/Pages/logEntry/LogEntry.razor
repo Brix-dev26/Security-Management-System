@@ -1,0 +1,671 @@
+﻿@page "/LogEntry"
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+@inject VisitorConsumer VisitorConsumer
+@using System.Globalization
+@inject VehicleConsumer VehicleConsumer
+@inject LogEntryConsumer LogEntryConsumer
+@inject CampusConsumer CampusConsumer
+@inject GateConsumer GateConsumer
+@inject SecurityStaffConsumer SecurityStaffConsumer
+
+<h3 class="text-center mt-4" style="direction: rtl;">Visitor Log Entry</h3>
+
+<div class="container p-4 shadow-lg bg-light rounded" style="direction: rtl; text-align: right;">
+    <div class="d-flex justify-content-between mb-3">
+        <div><strong>Gate Name:</strong> @GateName</div>
+        <div><strong>Campus Name:</strong> @CampusName</div>
+        <div><strong>Security Staff Name:</strong> @SecurityName</div>
+    </div>
+
+    <div class="input-group mb-3">
+        <select class="form-select" @bind="searchType">
+            <option value="Phone">Phone Number</option>
+            <option value="NationalId">National ID</option>
+            <option value="Passport">Passport Number</option>
+        </select>
+        <input type="text" class="form-control text-end" @bind="searchInput" placeholder="Enter required information">
+        <button class="btn btn-primary" @onclick="SearchVisitor">Search</button>
+    </div>
+
+    <div class="card shadow p-4 mt-4" style="direction: rtl; text-align: right;">
+        <h4 class="text-center mb-4 text-dark">Visitor Details</h4>
+
+        <div class="mb-3">
+            <button type="button" class="btn btn-warning me-2" @onclick="EnableEdit">Edit</button>
+            @if (isEditing)
+            {
+                <button type="button" class="btn btn-success" @onclick="SaveVisitorChanges">Save</button>
+            }
+            <button type="button" class="btn btn-primary" @onclick="ShowAddVehicleModal">Add Vehicle</button>
+        </div>
+
+        <table class="table table-striped table-bordered text-end">
+            <thead class="table-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Phone Number</th>
+                    <th>Email</th>
+                    <th>National ID</th>
+                    <th>Passport Number</th>
+                    <th>Blacklisted</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        @if (isEditing)
+                        {
+                            <input class="form-control" @bind="visitorName" />
+                        }
+                        else
+                        {
+                            @(string.IsNullOrEmpty(visitorName) ? "" : visitorName)
+                        }
+                    </td>
+                    <td>
+                        @if (isEditing)
+                        {
+                            <input class="form-control" @bind="visitorPhone" />
+                        }
+                        else
+                        {
+                            @(string.IsNullOrEmpty(visitorPhone) ? "" : visitorPhone)
+                        }
+                    </td>
+                    <td>
+                        @if (isEditing)
+                        {
+                            <input class="form-control" @bind="visitorEmail" />
+                        }
+                        else
+                        {
+                            @(string.IsNullOrEmpty(visitorEmail) ? "" : visitorEmail)
+                        }
+                    </td>
+                    <td>
+                        @if (isEditing)
+                        {
+                            <input class="form-control" @bind="nationalIdCard" />
+                        }
+                        else
+                        {
+                            @(nationalIdCard.HasValue ? nationalIdCard.ToString() : "")
+                        }
+                    </td>
+
+                    <td>
+                        @if (isEditing)
+                        {
+                            <input class="form-control" @bind="passportNo" />
+                        }
+                        else
+                        {
+                            @(string.IsNullOrEmpty(passportNo) ? "" : passportNo)
+                        }
+                    </td>
+                    <td>
+                        @(isBlacklisted ? "Yes" : "No")
+                    </td>
+
+                    <td>
+                        @(visitornotes)
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+
+    <div class="mt-3">
+        <label>Select Visitor's Vehicle:</label>
+        <select class="form-select" @bind="selectedVehicleId">
+            <option value="">No Vehicle</option>
+            @foreach (var vehicle in vehicles)
+            {
+                <option value="@vehicle.VehicleId">@vehicle.Plate</option>
+            }
+        </select>
+    </div>
+
+    <div class="mt-3">
+        <label>Visit Reason:</label>
+        <input type="text" class="form-control text-end" @bind="visitReason" placeholder="Enter visit reason">
+    </div>
+
+    <div class="mt-3">
+        <button class="btn btn-success w-100" @onclick="SubmitLogEntry">Log Entry</button>
+    </div>
+
+    <div class="card shadow p-4 mt-4" style="direction: rtl; text-align: center;">
+        <h4 class="text-center mb-4 text-dark">Today's Entry and Exit Log</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover w-100 mx-auto">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>#</th>
+                        <th>Visitor ID</th>
+                        <th>Name</th>
+                        <th>Phone Number</th>
+                        <th>Visit Reason</th>
+                        <th>Vehicle Plate</th>
+                        <th>Entry Time</th>
+                        <th>Exit Time</th>
+                        <th>Campus</th>
+                        <th>Entry Gate</th>
+                        <th>Exit Gate</th>
+                        <th>Security Staff (Entry)</th>
+                        <th>Security Staff (Exit)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in visitorLogs.Where(l => l.EntryTime.Date == DateTime.Today).OrderByDescending(l => l.EntryTime))
+                    {
+                        var visitor = visitorDetails.ContainsKey(log.VisitorId) ? visitorDetails[log.VisitorId] : null;
+                        var vehicle = vehicles.FirstOrDefault(v => v.VehicleId == log.VehicleId);
+
+                        var latestLog = visitorLogs
+                        .Where(l => l.VisitorId == log.VisitorId)
+                        .OrderByDescending(l => l.EntryTime)
+                        .FirstOrDefault();
+
+                        <tr class="text-center">
+                            <td>@log.LogId</td>
+                            <td>@log.VisitorId</td>
+                            <td>@(visitor != null ? visitor.name : " ")</td>
+                            <td>@(visitor != null ? visitor.phone_no : "")</td>
+                            <td>@log.Visit_reason</td>
+                            <td>@(vehicle != null ? vehicle.Plate : "On Foot")</td>
+                            <td>@log.EntryTime.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@(log.ExitTime.HasValue ? log.ExitTime.Value.ToString("yyyy-MM-dd HH:mm") : "Not Checked Out")</td>
+                            <td>@log.CampusName</td>
+                            <td>@log.GateName</td>
+                            <td>@log.ExitGateName</td>
+                            <td>@(string.IsNullOrWhiteSpace(log.SecEntanceName) ? "Unavailable" : log.SecEntanceName)</td>
+                            <td>@(string.IsNullOrWhiteSpace(log.SecExitName) ? "Unavailable" : log.SecExitName)</td>
+
+                            <td>
+                                @if (!log.ExitTime.HasValue && latestLog != null && latestLog.LogId == log.LogId)
+                                {
+                                    <button class="btn btn-danger btn-sm" @onclick="() => MarkVisitorAsExited(log.LogId, GateId)">
+                                        Check Out
+                                    </button>
+                                }
+                                else if (log.ExitTime.HasValue)
+                                {
+                                    <span class="text-success">Checked Out</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="addVisitorModal" tabindex="-1" aria-labelledby="addVisitorModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addVisitorModalLabel">Add New Visitor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mt-3 text-right">
+                        <label class="font-weight-bold">Phone Number</label>
+                        <input type="text" class="form-control text-right" @bind="visitorPhone" />
+                    </div>
+
+                    <div class="form-group mt-3 text-right">
+                        <label class="font-weight-bold">Name</label>
+                        <input type="text" class="form-control text-right" @bind="visitorName" />
+                    </div>
+
+                    <div class="form-group mt-3 text-right">
+                        <label class="font-weight-bold">Identity Type</label>
+                        <select class="form-control text-right" @bind="IdentityType" @bind:event="onchange">
+                            <option value="">Select Identity Type</option>
+                            <option value="Passport">Passport</option>
+                            <option value="National ID Card">National ID Card</option>
+                        </select>
+                    </div>
+
+                    @if (IdentityType == "National ID Card")
+                    {
+                        <div class="form-group mt-3 text-right">
+                            <label class="font-weight-bold">National ID Number</label>
+                            <input type="text" class="form-control text-right" @bind="NationalIdCardInput" />
+                        </div>
+                    }
+
+                    @if (IdentityType == "Passport")
+                    {
+                        <div class="form-group mt-3 text-right">
+                            <label class="font-weight-bold">Passport Number</label>
+                            <input type="text" class="form-control text-right" @bind="passportNoInput" />
+                        </div>
+                    }
+
+                    <div class="form-group mt-3 text-right">
+                        <label class="font-weight-bold">Email</label>
+                        <input type="email" class="form-control text-right" @bind="visitorEmail" />
+                    </div>
+
+                    <div class="form-group mt-3 text-right">
+                        <label class="font-weight-bold">Nationality</label>
+                        <input type="text" class="form-control text-right" readonly="@isNationalityReadOnly" @bind="nationality" />
+                    </div>
+
+                    <div class="form-group mt-3 text-right">
+                        <label class="font-weight-bold">Notes</label>
+                        <input type="text" class="form-control text-right" readonly="@visitornotes" @bind="visitornotes" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" @onclick="AddVisitor">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="addVehicleModal" tabindex="-1" aria-labelledby="addVehicleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addVehicleModalLabel">Add New Vehicle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mt-3 text-right">
+                        <label class="font-weight-bold">Vehicle Type</label>
+                        <select class="form-control text-right" @bind="SelectedType">
+                            <option value="">Select Vehicle Type</option>
+                            <option value="Private">Private</option>
+                            <option value="Heavy Transport">Heavy Transport</option>
+                            <option value="Diplomatic">Diplomatic</option>
+                            <option value="Military">Military</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mt-3 text-right">
+                        <label class="font-weight-bold">Plate Number</label>
+                        <input type="text" class="form-control text-right" @bind="Plate" />
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" @onclick="SubmitVehicle">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private SecurityStaffViewModel SecurityStaff;
+    private string CampusName = "";
+    private string GateName = "";
+    private string SecurityName = "";
+    private int CampusId;
+    private int GateId;
+    private string searchType = "Phone";
+    private string searchInput;
+    private int visitorId;
+    private string visitorName;
+    private string visitorPhone;
+    private string visitorEmail;
+    private long? nationalIdCard;
+    private string passportNo;
+    private bool isBlacklisted;
+    private string nationality;
+    private List<VehicleViewModel> vehicles = new();
+    private int? selectedVehicleId = null;
+    private string visitReason;
+    private DateTime entryTime = DateTime.Now;
+    private List<LogEntryViewModel> visitorLogs = new();
+    private Dictionary<int, VisitorViewModel> visitorDetails = new();
+    private string NationalIdCardInput;
+    private string passportNoInput;
+    private bool isNationalityReadOnly = false;
+    private string _identityType = "";
+    private string Plate;
+    private string SelectedType;
+    private string visitornotes;
+
+    private bool isEditing = false;
+
+    private string IdentityType
+    {
+        get => _identityType;
+        set
+        {
+            _identityType = value;
+            if (_identityType == "National ID Card")
+            {
+                nationality = "Egyptian";
+                isNationalityReadOnly = true;
+            }
+            else
+            {
+                nationality = "";
+                isNationalityReadOnly = false;
+            }
+        }
+    }
+
+    private async Task ShowAddVehicleModal()
+    {
+        await js.InvokeVoidAsync("eval", "$('#addVehicleModal').modal('show');");
+    }
+
+    private async Task SubmitVehicle()
+    {
+        if (string.IsNullOrEmpty(SelectedType))
+        {
+            await js.InvokeVoidAsync("alert", "Please select a vehicle type.");
+            return;
+        }
+
+        var newVehicle = new VehicleViewModel
+            {
+                VisitorId = visitorId,
+                Plate = Plate,
+                Type = SelectedType,
+            };
+
+        var result = await VehicleConsumer.AddVehicle(newVehicle);
+
+        if (!result.HasErrors)
+        {
+            await js.InvokeVoidAsync("alert", "Vehicle added successfully!");
+            await js.InvokeVoidAsync("eval", "$('#addVehicleModal').modal('hide');");
+
+            Plate = string.Empty;
+            SelectedType = string.Empty;
+
+            await FetchVisitorVehicles();
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", $"Error: {string.Join(", ", result.Errors)}");
+        }
+   
+    }
+
+    private async Task FetchVisitorVehicles()
+    {
+        var vehicleResult = await VehicleConsumer.GetVehiclesByVisitorId(visitorId);
+        vehicles = vehicleResult.Data ?? new List<VehicleViewModel>();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await js.InvokeAsync<string>("sessionStorage.getItem", "authToken");
+        if (string.IsNullOrEmpty(token))
+        {
+            NavigationManager.NavigateTo("/SecurityStaffLogin");
+            return;
+        }
+
+        try
+        {
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            int securityStaffId = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "Sec_ID")?.Value ?? "0");
+
+            var securityResult = await SecurityStaffConsumer.GetSecurityStaffById(securityStaffId);
+            if (securityResult.Data != null)
+            {
+                SecurityStaff = securityResult.Data;
+                SecurityName = SecurityStaff.Name;
+                CampusId = SecurityStaff.CampusId;
+                GateId = SecurityStaff.GateId;
+
+                // Fetching campus and gate details
+                await FetchCampusDetails(CampusId);
+                await FetchGateDetails(GateId);
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/SecurityStaffLogin");
+            }
+        }
+        catch (Exception)
+        {
+            NavigationManager.NavigateTo("/SecurityStaffLogin");
+        }
+    }
+
+    private async Task FetchCampusDetails(int campusId)
+    {
+        var campus = await CampusConsumer.GetCampusById(campusId);
+        CampusName = campus?.Data?.CampusName ?? "";
+    }
+
+    private async Task FetchGateDetails(int gateId)
+    {
+        var gate = await GateConsumer.GetGateById(gateId);
+        GateName = gate?.Data?.GateName ?? "";
+    }
+
+    private async Task SearchVisitor()
+    {
+        if (string.IsNullOrWhiteSpace(searchInput))
+        {
+            await js.InvokeVoidAsync("alert", "Please enter the required information.");
+            return;
+        }
+
+        APIReturn<List<VisitorViewModel>> result = searchType switch
+        {
+            "Phone" => await VisitorConsumer.GetVisitorsByPhoneNumber(searchInput),
+            "NationalId" => await VisitorConsumer.GetVisitorsByNationalIdCard(searchInput),
+            "Passport" => await VisitorConsumer.GetVisitorsByPassportId(searchInput),
+        };
+
+        if (result.HasErrors || result.Data is null || !result.Data.Any())
+        {
+            await js.InvokeVoidAsync("alert", "Visitor not found. A new visitor entry window will open.");
+            await ShowAddVisitorModal();
+            ClearVisitorDetails();
+            return;
+        }
+
+        var visitor = result.Data.First();
+        visitorId = visitor.VisitorId;
+        visitorName = visitor.name;
+        visitorPhone = visitor.phone_no;
+        visitorEmail = visitor.E_mail;
+        nationalIdCard = visitor.NationalIdCard;
+        passportNo = visitor.passport_no;
+        nationality = visitor.nationality;
+        isBlacklisted = visitor.IsBlacklisted ?? false;
+        visitornotes = visitor.notes;
+        visitorDetails[visitorId] = visitor;
+
+        var vehicleResult = await VehicleConsumer.GetVehiclesByVisitorId(visitorId);
+        vehicles = vehicleResult.Data ?? new List<VehicleViewModel>();
+
+        await FetchVisitorLogs(visitorId);
+    }
+
+    private async Task ShowAddVisitorModal()
+    {
+        await js.InvokeVoidAsync("eval", "$('#addVisitorModal').modal('show');");
+    }
+
+    private async Task FetchVisitorLogs(int visitorId)
+    {
+        var logResult = await LogEntryConsumer.GetLogIdByVisitorId(visitorId);
+
+        if (!logResult.HasErrors && logResult.Data != null)
+        {
+            visitorLogs = logResult.Data;
+
+            foreach (var log in visitorLogs)
+            {
+                if (log.GateId > 0)
+                {
+                    var gateResponse = await GateConsumer.GetGateById(log.GateId);
+                    log.GateName = gateResponse?.Data?.GateName ?? "Unknown";
+                }
+
+                if (log.GateId_exit is > 0)
+                {
+                    var exitGateResponse = await GateConsumer.GetGateById(log.GateId_exit.Value);
+                    log.ExitGateName = exitGateResponse?.Data?.GateName ?? "Unknown";
+                }
+
+                if (log.CampusId > 0)
+                {
+                    var campusResponse = await CampusConsumer.GetCampusById(log.CampusId);
+                    log.CampusName = campusResponse?.Data?.CampusName ?? "Unknown";
+                }
+
+                if (log.Sec_ID > 0)
+                {
+                    var secEntryResponse = await SecurityStaffConsumer.GetSecurityStaffById(log.Sec_ID);
+                    log.SecEntanceName = secEntryResponse?.Data?.Name ?? "Unknown";
+                }
+
+                if (log.Sec_ID_Exit > 0)
+                {
+                    var secExitResponse = await SecurityStaffConsumer.GetSecurityStaffById(log.Sec_ID_Exit.Value);
+                    log.SecExitName = secExitResponse?.Data?.Name ?? "Unknown";
+                }
+            }
+        }
+    }
+
+
+    private void ClearVisitorDetails()
+    {
+        visitorId = 0;
+        visitorName = string.Empty;
+        visitorPhone = string.Empty;
+        visitorEmail = string.Empty;
+        nationalIdCard = null;
+        passportNo = string.Empty;
+        nationality = string.Empty;
+        isBlacklisted = false;
+        vehicles.Clear();
+        visitorLogs.Clear();
+        selectedVehicleId = null;
+        visitReason = string.Empty;
+        visitornotes = string.Empty;
+    }
+
+    private async Task SubmitLogEntry()
+    {
+        if (visitorId == 0 || string.IsNullOrWhiteSpace(visitReason))
+        {
+            await js.InvokeVoidAsync("alert", "Please enter all required information before logging in.");
+            return;
+        }
+
+        var logEntry = new LogEntryViewModel
+            {
+                VisitorId = visitorId,
+                VehicleId = selectedVehicleId > 0 ? selectedVehicleId : null,
+                Sec_ID = SecurityStaff.Sec_ID,
+                CampusId = CampusId,
+                GateId = GateId,
+                Visit_reason = visitReason,
+                EntryTime = entryTime,
+                ExitTime = null,
+            };
+
+        var result = await LogEntryConsumer.AddLogEntry(logEntry);
+        if (!result.HasErrors)
+        {
+            await js.InvokeVoidAsync("alert", "Login recorded successfully!");
+            await FetchVisitorLogs(visitorId);
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", $"Error: {string.Join(", ", result.Errors)}");
+        }
+    }
+
+    private async Task MarkVisitorAsExited(int logId, int exitGateId)
+    {
+        var result = await LogEntryConsumer.UpdateExitTimeByLogId(logId, exitGateId, SecurityStaff.Sec_ID);
+        if (!result.HasErrors)
+        {
+            await js.InvokeVoidAsync("alert", "Exit time recorded successfully!");
+            await FetchVisitorLogs(visitorId);
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", $"Error: {string.Join(", ", result.Errors)}");
+        }
+    }
+
+    private async Task AddVisitor()
+    {
+        var newVisitor = new VisitorViewModel
+            {
+                name = visitorName,
+                phone_no = visitorPhone,
+                E_mail = visitorEmail,
+                NationalIdCard = string.IsNullOrWhiteSpace(NationalIdCardInput) ? null : (long?)Convert.ToInt64(NationalIdCardInput),
+                passport_no = passportNoInput,
+                nationality = nationality,
+                IsBlacklisted = false,
+                notes = visitornotes
+            };
+
+        var result = await VisitorConsumer.AddVisitor(newVisitor);
+
+        if (!result.HasErrors)
+        {
+            await js.InvokeVoidAsync("alert", "Visitor added successfully!");
+            await js.InvokeVoidAsync("eval", "$('#addVisitorModal').modal('hide');");
+            await SearchVisitor();
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", $"Error: {string.Join(", ", result.Errors)}");
+        }
+    }
+
+    private void EnableEdit()
+    {
+        isEditing = true;
+    }
+
+    private async Task SaveVisitorChanges()
+    {
+        var updatedVisitor = new VisitorViewModel
+            {
+                VisitorId = visitorId,
+                name = visitorName,
+                phone_no = visitorPhone,
+                E_mail = visitorEmail,
+                NationalIdCard = nationalIdCard,
+                passport_no = passportNo,
+                nationality = nationality,
+            };
+
+        var result = await VisitorConsumer.UpdateVisitorById(updatedVisitor);
+
+        if (result.HasErrors)
+        {
+            await js.InvokeVoidAsync("alert", $"Update failed: {string.Join(", ", result.Errors)}");
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "Visitor details updated successfully.");
+            isEditing = false;
+        }
+    }

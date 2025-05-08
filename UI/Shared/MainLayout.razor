@@ -1,0 +1,44 @@
+﻿@using UI.Helpers
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject ReserverTokenAuthenticationStateProvider TokenProvider
+
+@code {
+    private bool IsLoggedIn = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await TokenProvider.GetTokenAsync();
+        IsLoggedIn = !string.IsNullOrEmpty(token);
+    }
+
+    private bool ShouldShowSidebar => IsLoggedIn && !Navigation.Uri.EndsWith("/");
+}
+
+<div>
+    <TopNavBar />
+    <div id="wrapper">
+        @if (ShouldShowSidebar)
+        {
+            <SideBar />
+        }
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <!-- Main Content -->
+            <div id="content">
+                <div class="container-fluid home">
+                    @Body
+                </div>
+            </div>
+            <footer class="sticky-footer ">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+</div>

@@ -1,0 +1,21 @@
+﻿@using global::Shared.UI
+
+
+<nav class="navbar navbar-expand navbar-light  topbar static-top shadow">
+
+    <!-- Topbar Navbar -->
+    <ul class="navbar-nav mend-auto">
+
+        <!-- Nav Item - User Information -->
+        <AuthorizeView>
+            <Authorized>
+                <strong class="text-gold">
+                    @*                     @context.User.GetLoggedInUserData()
+                    *@
+                </strong>
+            </Authorized>
+        </AuthorizeView>
+
+
+    </ul>
+</nav>

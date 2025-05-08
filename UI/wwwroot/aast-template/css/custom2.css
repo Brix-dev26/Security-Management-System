@@ -1,0 +1,259 @@
+﻿.cashb h2 {
+    margin-top:0px;
+    margin-left:0px;
+    color: #061b49;
+    font-weight:bold;
+}
+.cashb button{
+    float:left;
+    margin-left:30px;
+}
+.cashcardy{
+    border-radius:15px;
+}
+.displayeddata{
+    margin-left:90px;
+    margin-top:20px;
+    text-align:justify;
+}
+#datah4{
+    font-weight:bold;
+    margin-left:30px;
+    margin-top:20px;
+    color:#132b61;
+}
+.displayeddata label {
+    font-size: 16px;
+}
+.displayeddata span{
+    font-weight:bold;
+    color:navy;
+    font-size:18px;
+}
+#addcash {
+    font-weight: bold;
+    margin-left: 30px;
+    margin-top: 20px;
+    color: #132b61;
+}
+.cashcardy li {
+    border-radius: 5px;
+    font-weight: bold;
+}
+.stepy button{
+    padding:0px !important;
+}
+.datel{
+    margin-left:90px;
+    margin-top:10px;
+}
+.datel label {
+    font-weight: bold;
+}
+.bankl {
+    margin-left: 0px;
+    margin-top: 20px;
+}
+.bankl label{
+    margin-left:20px;
+    font-weight:bold;
+}
+.notel {
+    margin-left: 90px;
+    margin-top: 10px;
+}
+
+.notel label {
+    font-weight: bold;
+}
+.noteltexta textarea{
+    width: 400px;
+    height: 150px;
+    border: 2px solid #e0d7d7;
+    background: white;
+    margin-left:90px;
+    border-radius:10px;
+    max-width:70%;
+}
+#calendar {
+    margin-left: 10px;
+    margin-top: 10px;
+    color: darkslategrey;
+    background: #f5f7f8;
+    border-radius: 9px;
+    border: 2px solid #e0d7d7;
+    width:100%;
+    max-width: 250px;
+    min-width:200px;
+    height: 40px;
+}
+#bankaccount {
+    margin-left: 10px;
+    margin-top: 0px;
+    color: darkslategrey;
+    background: #f5f7f8;
+    border-radius: 9px;
+    border: 2px solid #e0d7d7;
+    width: 250px;
+    height: 40px;
+}
+  
+  
+.btn-block12{
+    margin-left:500px;
+}
+.labad label{
+    margin-left:10px;
+    font-weight: bold;
+    font-size: 16px;
+}
+.btn-outline-info3 {
+    background: #528cf5;
+    width: 110px;
+    height: 50px;
+    border-radius:9px;
+    height:50px;
+    color:white;
+    border:none;
+    font-size:18px;
+}
+.btn-block8 {
+    margin-top: 10px;
+    margin-left:0px;
+}
+.texttable{
+    color:white;
+}
+.partup h3 {
+        margin-left: 50px;
+        margin-top: 15px;
+        margin-bottom: 20px;
+        color: navy;
+        font-weight: bold;
+    }
+.btn-block9 {
+    margin-left: 60%;
+    margin-top: 20px;
+    margin-right:50px;
+    margin-bottom: 10px;
+    color:black;
+}
+.cashy{
+    margin-right:2px;
+    margin-top:2px;
+}
+#filterSection {
+    height: 300px;
+    width: 300px;
+    margin-top: 10px;
+    border-radius: 10px;
+    background: #e8ebf2;
+}
+#filterSection label{
+    font-weight:bold;
+}
+.filtercard {
+    border-radius: 10px;
+    margin-top: 20px;
+    margin-bottom: 0px;
+    margin-left: 1px;
+    background: #e8ebf2;
+    border: 1px solid #e0d7d7;
+    border: none;
+    width: 100%;
+    max-width: 300px;
+    min-width: 200px;
+}
+.btn-block10 {
+    margin-right:80px;
+    color:black;
+}
+.regcard {
+    border-radius: 10px;
+    margin-top: 20px;
+    background: #e8ebf2;
+    border: none;
+    width: 100%;
+    max-width: 300px;
+    min-width: 200px;
+}
+#searchSection {
+    height: 300px;
+    margin-top: 10px;
+    border-radius:10px;
+}
+#searchSection label {
+    font-weight: bold;
+}
+.admcard {
+    border-radius: 10px;
+    margin-top: 20px;
+    background: #e8ebf2;
+    border: none;
+    width: 100%;
+    max-width: 300px;
+    min-width: 200px;
+}
+#admissionSection {
+    height: 250px;
+    margin-top: 10px;
+    border-radius: 10px;
+}
+    #admissionSection label {
+        font-weight: bold;
+    }
+
+.btn-primary11{
+    font-size:16px;
+    font-weight:bold;
+    text-align:center;
+    margin-left:0px;
+   margin-top:50px;
+   background:#f9f9f9;
+    color:black;
+    width:100%;
+    max-width: 400px;
+    min-width:200px;
+}
+    .btn-primary11:hover {
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        margin-left: 0px;
+        background: #528cf5;
+        color: white;
+        width: 100%;
+        max-width: 400px;
+        min-width: 200px;
+    }
+.btn-block11 {
+    height:50px;
+    margin-bottom:0px;
+}
+.labad2 label{
+    margin-left:10px;
+    font-weight:bold;
+}
+.inputbox2 {
+    border-radius: 8px;
+    width: 100%;
+    max-width: 200px;
+    min-width: 100px;
+    height: 35px;
+    border: 2px solid #e0d7d7;
+    text-align: justify;
+    margin-top: 0px;
+    margin-left:10px;
+}
+.stepy ul {
+    margin-left: 1px;
+}
+.stepy button{
+    font-weight:bold;
+    margin-bottom:5px;
+}
+.viewcash{
+    background:white;
+    border-radius:10px;
+    margin:0px auto;
+}

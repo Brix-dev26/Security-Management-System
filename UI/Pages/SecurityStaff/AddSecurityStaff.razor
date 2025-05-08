@@ -1,0 +1,177 @@
+﻿@page "/AddSecurityStaff"
+@inject SecurityStaffConsumer SecurityStaffConsumer
+@inject CampusConsumer CampusConsumer
+@inject GateConsumer GateConsumer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize(Roles = "Computer Security Officer")]
+
+<div class="container" dir="ltr">
+    <div class="text-center mt-5">
+        <h1 class="text-primary font-weight-bold text-left">Security Staff Management</h1>
+        <p class="text-secondary text-left">Add a New Security Staff Member</p>
+    </div>
+
+    <div class="card shadow-lg p-4 mt-4">
+        <h5 class="text-center mb-4 text-dark text-left">Add Security Staff</h5>
+
+        <div class="form-group mt-3 text-left">
+            <label for="name" class="font-weight-bold">Name</label>
+            <input type="text" id="name" class="form-control text-left" @bind="name" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="UserId" class="font-weight-bold">User ID</label>
+            <input type="text" id="UserId" class="form-control text-left" @bind="UserIdInput" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="password" class="font-weight-bold">Password</label>
+            <input type="password" id="password" class="form-control text-left" @bind="PasswordInput" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="nationalIdCard" class="font-weight-bold">National ID</label>
+            <input type="text" id="nationalIdCard" class="form-control text-left" @bind="NationalIdCardInput" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="role" class="font-weight-bold">Role</label>
+            <select class="form-control text-left" @bind="Role">
+                <option value="">Select Role</option>
+                <option value="Security Officer">Security Officer</option>
+                <option value="Security Guard">Security Guard</option>
+                <option value="Security Manager">Security Manager</option>
+                <option value="Computer Security Officer">Computer Security Officer</option>
+            </select>
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="shiftTime" class="font-weight-bold">Shift Time</label>
+            <input type="text" id="shiftTime" class="form-control text-left" @bind="shiftTime" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="contactNumber" class="font-weight-bold">Contact Number</label>
+            <input type="text" id="contactNumber" class="form-control text-left" @bind="contactNumber" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="campus" class="font-weight-bold">Campus</label>
+            <select class="form-control text-left" id="campus" @onchange="OnCampusChange">
+                <option value="">Select Campus</option>
+                @foreach (var campus in campuses)
+                {
+                    <option value="@campus.CampusId">@campus.CampusName</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="gate" class="font-weight-bold">Gate</label>
+            <select class="form-control text-left" id="gate" @bind="selectedGateId">
+                <option value="">Select Gate</option>
+                @foreach (var gate in gates)
+                {
+                    <option value="@gate.GateId">@gate.GateName</option>
+                }
+            </select>
+        </div>
+
+        <button type="button" class="btn btn-success mt-5" @onclick="SubmitAsync">Add</button>
+    </div>
+</div>
+
+@code {
+    private string name;
+    private string UserIdInput;
+    private string PasswordInput;
+    private string NationalIdCardInput;
+    private string Role;
+    private string shiftTime;
+    private string contactNumber;
+
+    private List<CampusViewModel> campuses = new();
+    private List<GateViewModel> gates = new();
+    private int selectedCampusId;
+    private int selectedGateId;
+
+    private int Sec_ID;
+    private int StaffManagerId;
+    private string userRole;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSecurityData();
+
+        var response = await CampusConsumer.GetAllCampuses();
+        if (!response.HasErrors)
+        {
+            campuses = response.Data;
+        }
+    }
+
+    private async Task LoadSecurityData()
+    {
+        try
+        {
+            var token = await js.InvokeAsync<string>("sessionStorage.getItem", "authToken");
+            if (string.IsNullOrWhiteSpace(token)) return;
+
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            Sec_ID = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "Sec_ID")?.Value ?? "0");
+            StaffManagerId = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "StaffManagerId")?.Value ?? "0");
+
+            userRole = jwtToken.Claims.FirstOrDefault(c => c.Type.EndsWith("Role", StringComparison.OrdinalIgnoreCase))?.Value;
+        }
+        catch (Exception ex)
+        {
+            // Log error if needed
+        }
+    }
+
+    private async Task OnCampusChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int campusId))
+        {
+            selectedCampusId = campusId;
+
+            var response = await GateConsumer.GetGatesByCampusId(selectedCampusId);
+            gates = !response.HasErrors && response.Data != null ? response.Data : new List<GateViewModel>();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        var newStaff = new SecurityStaffViewModel
+            {
+                Name = name,
+                Role = Role,
+                ShiftTime = shiftTime,
+                ContactNumber = contactNumber,
+                UserId = long.TryParse(UserIdInput?.Trim(), out var userId) ? userId : 0,
+                NationalIdCard = long.TryParse(NationalIdCardInput?.Trim(), out var natId) ? natId : 0,
+                Password = long.TryParse(PasswordInput?.Trim(), out var pass) ? pass : 0,
+                CampusId = selectedCampusId,
+                GateId = selectedGateId
+            };
+
+        var result = await SecurityStaffConsumer.AddSecurityStaff(newStaff);
+
+        if (!result.HasErrors)
+        {
+            await js.InvokeVoidAsync("alert", "Security staff added successfully!");
+            NavigationManager.NavigateTo("/SecurityStaffDashboard");
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", $"Error: {string.Join(", ", result.Errors)}");
+        }
+    }
+
+    private void GoToLogin() => NavigationManager.NavigateTo("/SecurityStaffLogin");
+}

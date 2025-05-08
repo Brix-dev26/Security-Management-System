@@ -1,0 +1,122 @@
+﻿@page "/"
+@inject SecurityStaffConsumer SecurityStaffConsumer
+@inject StaffManagerConsumer StaffManagerConsumer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+@inject ReserverTokenAuthenticationStateProvider TokenProvider
+@using System.IdentityModel.Tokens.Jwt
+@using System.Linq
+@using UI.Helpers
+
+<div class="container">
+    <div class="text-center mt-5">
+        <h1 class="text-primary font-weight-bold">Login Portal</h1>
+        <p class="text-secondary">Please log in to access your information</p>
+    </div>
+
+    <div class="card login-card shadow-lg p-4 mt-4" style="max-width: 500px; margin: auto;">
+        <h4 class="text-center mb-4 text-dark">Login</h4>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger text-center">
+                @ErrorMessage
+            </div>
+        }
+
+        <form>
+            <div class="form-group">
+                <label for="userId" class="font-weight-bold">User ID</label>
+                <input type="text" id="userId" class="form-control"
+                       @bind="UserIdInput"
+                       @bind:event="oninput"
+                       placeholder="Enter User ID"
+                       required pattern="[0-9]*"
+                       title="Please enter a valid User ID" />
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="font-weight-bold">Password</label>
+                <input type="password" id="password" class="form-control"
+                       @bind="PasswordInput"
+                       @bind:event="oninput"
+                       placeholder="Enter Password"
+                       required />
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block font-weight-bold mt-3" @onclick="PerformLogin">
+                Login
+            </button>
+        </form>
+
+    </div>
+</div>
+
+@code {
+    private long UserId;
+    private long Password;
+    private string UserIdInput = "";
+    private string PasswordInput = "";
+    private string ErrorMessage;
+
+    private async Task PerformLogin()
+    {
+        try
+        {
+            if (!long.TryParse(UserIdInput, out UserId))
+            {
+                ErrorMessage = "Please enter a valid User ID.";
+                return;
+            }
+
+            if (!long.TryParse(PasswordInput, out Password))
+            {
+                ErrorMessage = "Please enter a valid password (numbers only).";
+                return;
+            }
+
+            var securityStaffLoginModel = new SecurityStaffLoginViewModel
+                {
+                    user_id = UserId,
+                    password = Password
+                };
+
+            var securityStaffResult = await SecurityStaffConsumer.Login(securityStaffLoginModel);
+
+            if (securityStaffResult != null && !securityStaffResult.HasErrors && securityStaffResult.Data != null)
+            {
+                var token = securityStaffResult.Data;
+                await TokenProvider.SetTokenAsync(token);
+                await js.InvokeVoidAsync("sessionStorage.setItem", "authToken", token);
+
+                NavigationManager.NavigateTo("/SecurityStaffDashboard", forceLoad: true);
+                return;
+            }
+
+            var staffManagerLoginModel = new StaffManagerViewModel
+                {
+                    UserId = UserId,
+                    Password = Password
+                };
+
+            var staffManagerResult = await StaffManagerConsumer.Login(staffManagerLoginModel);
+
+            if (staffManagerResult != null && !staffManagerResult.HasErrors && staffManagerResult.Data != null)
+            {
+                var token = staffManagerResult.Data;
+                await TokenProvider.SetTokenAsync(token);
+                await js.InvokeVoidAsync("sessionStorage.setItem", "authToken", token);
+
+                NavigationManager.NavigateTo("/SecurityStaffDashboard", forceLoad: true);
+            }
+            else
+            {
+                ErrorMessage = "Login credentials are incorrect.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+}

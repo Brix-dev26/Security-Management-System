@@ -1,0 +1,196 @@
+﻿@page "/AddVehicle"
+@inject NavigationManager NavigationManager
+@inject VehicleConsumer VehicleConsumer
+@inject VisitorConsumer VisitorConsumer
+@inject IJSRuntime js
+
+<div class="container" dir="rtl">
+    <div class="text-center mt-5">
+        <h1 class="text-primary font-weight-bold text-right">Add Visitor Vehicle</h1>
+        <p class="text-secondary text-right">Please enter the vehicle information linked to the visitor</p>
+    </div>
+
+    @if (!hideSearchPhone)
+    {
+        <div class="card shadow-lg p-4 mt-4">
+            <h4 class="text-center mb-4 text-dark text-right">Search for Visitor</h4>
+            <div class="form-group mt-3 text-right">
+                <label for="searchPhone" class="font-weight-bold">Phone Number</label>
+                <input type="text" id="searchPhone" class="form-control text-right" @bind="searchPhoneNumber" />
+            </div>
+            <button type="button" class="btn btn-primary mt-3 w-100" @onclick="SearchVisitor">Search</button>
+        </div>
+    }
+
+    @if (Visitor != null)
+    {
+        <div class="card shadow-lg p-4 mt-4">
+            <h4 class="text-center mb-4 text-dark text-right">Visitor Details</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card p-3 shadow-sm text-right">
+                        <h5 class="text-secondary">Visitor ID:</h5>
+                        <p class="font-weight-bold">@Visitor.VisitorId</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card p-3 shadow-sm text-right">
+                        <h5 class="text-secondary">Phone Number:</h5>
+                        <p class="font-weight-bold">@Visitor.phone_no</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mt-3">
+                    <div class="card p-3 shadow-sm text-right">
+                        <h5 class="text-secondary">Name:</h5>
+                        <p class="font-weight-bold">@Visitor.name</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mt-3">
+                    <div class="card p-3 shadow-sm text-right">
+                        <h5 class="text-secondary">Email:</h5>
+                        <p class="font-weight-bold">@Visitor.E_mail</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (VisitorVehicles != null && VisitorVehicles.Count > 0)
+        {
+            <div class="card shadow-lg p-4 mt-4">
+                <h4 class="text-center mb-4 text-dark text-right">Registered Vehicles for Visitor</h4>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Plate Number</th>
+                            <th class="text-center">Vehicle Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var vehicle in VisitorVehicles)
+                        {
+                            <tr>
+                                <td class="text-center">@vehicle.Plate</td>
+                                <td class="text-center">@vehicle.Type</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info text-center mt-3">
+                No vehicles registered for this visitor.
+            </div>
+        }
+
+        <div class="card shadow-lg p-4 mt-4">
+            <h4 class="text-center mb-4 text-dark text-right">Add Another Vehicle for the Visitor</h4>
+
+            <div class="form-group mt-3 text-right">
+                <label for="VehiclePlate" class="font-weight-bold">Plate Number</label>
+                <input type="text" id="VehiclePlate" class="form-control text-right" @bind="Plate" placeholder="Enter plate number" required />
+            </div>
+
+            <div class="form-group mt-3 text-right">
+                <label for="VehicleType" class="font-weight-bold">Vehicle Type</label>
+                <select id="VehicleType" class="form-control text-right" @bind="SelectedType">
+                    <option value="" disabled selected>Select vehicle type...</option>
+                    @foreach (var type in VehicleTypes)
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </select>
+            </div>
+
+            <button type="button" class="btn btn-success mt-3 w-100" @onclick="SubmitVehicle">Add Vehicle</button>
+        </div>
+    }
+</div>
+
+@code {
+    private bool hideSearchPhone = false;
+    private VisitorViewModel Visitor;
+    private string searchPhoneNumber;
+    private string Plate;
+    private string SelectedType;
+
+    private List<VehicleViewModel> VisitorVehicles = new();
+
+    private List<string> VehicleTypes = new() { "Private", "Heavy Transport", "Diplomatic", "Military", "Other" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        hideSearchPhone = NavigationManager.Uri.Contains("fromVisitor=true");
+
+        if (hideSearchPhone)
+        {
+            var visitorIdString = NavigationManager.Uri.Split("visitorId=").LastOrDefault();
+            if (int.TryParse(visitorIdString, out int visitorId))
+            {
+                await LoadVisitor(visitorId);
+            }
+        }
+    }
+
+    private async Task SearchVisitor()
+    {
+        var result = await VisitorConsumer.GetVisitorsByPhoneNumber(searchPhoneNumber);
+        if (result != null && !result.HasErrors && result.Data.Count > 0)
+        {
+            Visitor = result.Data.First();
+            await LoadVisitorVehicles(Visitor.VisitorId);
+        }
+    }
+
+    private async Task LoadVisitor(int visitorId)
+    {
+        var result = await VisitorConsumer.GetVisitorsByPhoneNumber(visitorId.ToString());
+        if (result != null && !result.HasErrors && result.Data.Count > 0)
+        {
+            Visitor = result.Data.First();
+            await LoadVisitorVehicles(visitorId);
+        }
+    }
+
+    private async Task LoadVisitorVehicles(int visitorId)
+    {
+        var vehicleResult = await VehicleConsumer.GetVehiclesByVisitorId(visitorId);
+        if (vehicleResult != null && !vehicleResult.HasErrors)
+        {
+            VisitorVehicles = new List<VehicleViewModel>(vehicleResult.Data);
+            StateHasChanged();
+        }
+    }
+
+    private async Task SubmitVehicle()
+    {
+        if (string.IsNullOrEmpty(SelectedType))
+        {
+            await js.InvokeVoidAsync("alert", "Please select a vehicle type.");
+            return;
+        }
+
+        var newVehicle = new VehicleViewModel
+            {
+                VisitorId = Visitor.VisitorId,
+                Plate = Plate,
+                Type = SelectedType,
+            };
+
+        var result = await VehicleConsumer.AddVehicle(newVehicle);
+
+        if (!result.HasErrors)
+        {
+            await js.InvokeVoidAsync("alert", "Vehicle added successfully!");
+            await LoadVisitorVehicles(Visitor.VisitorId);
+            StateHasChanged();
+
+            Plate = string.Empty;
+            SelectedType = string.Empty;
+        }
+    }
+}

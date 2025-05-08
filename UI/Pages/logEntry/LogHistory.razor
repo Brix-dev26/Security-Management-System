@@ -1,0 +1,331 @@
+﻿@page "/LogHistory"
+@inject NavigationManager NavigationManager
+@inject LogEntryConsumer LogEntryConsumer
+@inject CampusConsumer CampusConsumer
+@inject GateConsumer GateConsumer
+@inject SecurityStaffConsumer SecurityStaffConsumer
+@inject VisitorConsumer visitorConsumer
+@inject IJSRuntime js
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize(Roles = "Security Manager")]
+
+<div class="container" dir="rtl">
+    <div class="text-center mt-5">
+        <h1 class="text-primary font-weight-bold text-right">Log In and Out History</h1>
+        <p class="text-secondary text-right">Here you can view the login history for a specific period.</p>
+    </div>
+
+    <div class="card shadow-lg p-4 mt-4">
+        <h4 class="text-center mb-4 text-dark text-right">Select the period and location</h4>
+
+        <div class="row text-right">
+            <div class="form-group col-md-4">
+                <label for="fromDate">From Date</label>
+                <input type="date" id="fromDate" class="form-control text-right" @bind="fromDate" />
+            </div>
+
+            <div class="form-group col-md-4">
+                <label for="toDate">To Date</label>
+                <input type="date" id="toDate" class="form-control text-right" @bind="toDate" />
+            </div>
+
+            <div class="form-group col-md-4">
+                <label>Select Campus</label>
+                <select class="form-control" @onchange="OnCampusChanged">
+                    <option value="">-- Select Campus --</option>
+                    @foreach (var campus in Campuses)
+                    {
+                        <option value="@campus.CampusId" selected="@(SelectedCampusId == campus.CampusId)">
+                            @campus.CampusName
+                        </option>
+                    }
+                </select>
+            </div>
+
+            @if (Gates.Any())
+            {
+                <div class="form-group col-md-6">
+                    <label>Select Gate</label>
+                    <select class="form-control" @bind="SelectedGateId">
+                        <option value="">-- All Gates --</option>
+                        @foreach (var gate in Gates)
+                        {
+                            <option value="@gate.GateId">@gate.GateName</option>
+                        }
+                    </select>
+                </div>
+            }
+        </div>
+
+        <button class="btn btn-primary mt-3 w-100" @onclick="GetLogHistory">View Log</button>
+
+    </div>
+
+
+    @if (PagedLogs.Any())
+    {
+        <div class="card shadow-lg p-4 mt-4">
+            <h4 class="text-center mb-4 text-dark text-right">
+                From @fromDate.ToString("yyyy-MM-dd") to @toDate.ToString("yyyy-MM-dd")
+                Campus @Campuses.FirstOrDefault(c => c.CampusId == SelectedCampusId).CampusName
+                Gate @(SelectedGateId.HasValue ? Gates.FirstOrDefault(g => g.GateId == SelectedGateId.Value).GateName : "All Gates")
+            </h4>
+
+            @foreach (var group in PagedLogs)
+            {
+                <h5 class="mt-3 text-right text-primary">Gate: @group.Key</h5>
+
+                <table class="table table-bordered text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Log Number</th>
+                            <th>Visitor ID</th>
+                            <th>Visitor Name</th>
+                            <th>Phone Number</th>
+                            <th>National ID</th>
+                            <th>Passport Number</th>
+                            <th>Entry Time</th>
+                            <th>Exit Time</th>
+                            <th>Campus</th>
+                            <th>Entry Gate</th>
+                            <th>Exit Gate</th>
+                            <th>Entry Security Staff Name</th>
+                            <th>Exit Security Staff Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in group.Value)
+                        {
+                            <tr>
+                                <td>@log.LogId</td>
+                                <td>@log.VisitorId</td>
+                                <td>@log.VisitorName</td>
+                                <td>@log.VisitorPhone</td>
+                                <td>@log.VisitorNationalId</td>
+                                <td>@log.VisitorPassport</td>
+                                <td>@log.EntryTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@(log.ExitTime?.ToString("yyyy-MM-dd HH:mm") ?? "Not Recorded")</td>
+                                <td>@log.CampusName</td>
+                                <td>@log.GateName</td>
+                                <td>@log.ExitGateName</td>
+                                <td>@log.SecEntanceName</td>
+                                <td>@log.SecExitName</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="pagination justify-content-center">
+                    <button class="btn btn-secondary" @onclick="() => GoToPreviousPage(group.Key)"
+                            disabled="@(!HasPreviousPageForGate(group.Key))">
+                        Previous
+                    </button>
+                    <button class="btn btn-secondary" @onclick="() => GoToNextPage(group.Key)"
+                            disabled="@(!HasNextPageForGate(group.Key))">
+                        Next
+                    </button>
+                </div>
+            }
+        </div>
+    }
+    else if (HasSearched)
+    {
+        <div class="alert alert-info text-center mt-4">No records found in the selected period.</div>
+    }
+</div>
+
+
+@code {
+    private DateTime fromDate = DateTime.Now.AddDays(-7);
+    private DateTime toDate = DateTime.Now;
+
+    private List<CampusViewModel> Campuses = new();
+    private List<GateViewModel> Gates = new();
+    private List<LogEntryViewModel> logEntries = new();
+    private Dictionary<string, List<LogEntryViewModel>> GroupedLogs = new();
+    private Dictionary<string, List<LogEntryViewModel>> PagedLogs = new();
+
+    private int? SelectedCampusId;
+    private int? SelectedGateId;
+    private bool HasSearched = false;
+    private Dictionary<string, int> CurrentPagePerGate = new();
+    private const int LogsPerPage = 5;
+    private int? Sec_ID { get; set; }
+    private int? StaffManagerId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSecurityData();
+
+        var campusResult = await CampusConsumer.GetAllCampuses();
+        if (campusResult?.Data != null)
+        {
+            Campuses = campusResult.Data;
+        }
+    }
+
+    private async Task LoadSecurityData()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var token = await js.InvokeAsync<string>("sessionStorage.getItem", "authToken");
+
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            Sec_ID = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "Sec_ID")?.Value ?? "0");
+            StaffManagerId = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "StaffManagerId")?.Value ?? "0");
+
+            var userRole = jwtToken.Claims.FirstOrDefault(c => c.Type.EndsWith("Role", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            Console.WriteLine($"User Role: {userRole}");
+        }
+        catch (Exception ex)
+        {
+            // Handle exception
+        }
+    }
+
+    private async Task OnCampusChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int campusId))
+        {
+            SelectedCampusId = campusId;
+            SelectedGateId = null;
+
+            var gatesResult = await GateConsumer.GetGatesByCampusId(campusId);
+            Gates = gatesResult?.Data ?? new();
+        }
+        else
+        {
+            SelectedCampusId = null;
+            Gates.Clear();
+        }
+    }
+
+    private async Task GetLogHistory()
+    {
+        HasSearched = true;
+
+        if (SelectedCampusId == null)
+        {
+            await js.InvokeVoidAsync("alert", "Please select a campus first.");
+            return;
+        }
+
+        var result = await LogEntryConsumer.GetLogHistoryByDateRange(fromDate, toDate, SelectedCampusId.Value, SelectedGateId);
+
+        if (!result.HasErrors && result.Data != null)
+        {
+            logEntries = result.Data;
+
+            foreach (var log in logEntries)
+            {
+                if (log.GateId > 0)
+                {
+                    var gateResponse = await GateConsumer.GetGateById(log.GateId);
+                    log.GateName = gateResponse?.Data?.GateName;
+                }
+
+                if (log.GateId_exit is > 0)
+                {
+                    var exitGateResponse = await GateConsumer.GetGateById(log.GateId_exit.Value);
+                    log.ExitGateName = exitGateResponse?.Data?.GateName;
+                }
+
+                if (log.CampusId > 0)
+                {
+                    var campusResponse = await CampusConsumer.GetCampusById(log.CampusId);
+                    log.CampusName = campusResponse?.Data?.CampusName;
+                }
+
+                if (log.Sec_ID > 0)
+                {
+                    var secEntryResponse = await SecurityStaffConsumer.GetSecurityStaffById(log.Sec_ID);
+                    log.SecEntanceName = secEntryResponse?.Data?.Name ?? "Unknown";
+                }
+
+                if (log.Sec_ID_Exit > 0)
+                {
+                    var secExitResponse = await SecurityStaffConsumer.GetSecurityStaffById(log.Sec_ID_Exit.Value);
+                    log.SecExitName = secExitResponse?.Data?.Name ?? "Unknown";
+                }
+
+                if (log.VisitorId > 0)
+                {
+                    var visitorResponse = await visitorConsumer.GetVisitorById(log.VisitorId);
+                    if (visitorResponse?.Data != null)
+                    {
+                        var visitor = visitorResponse.Data;
+                        log.VisitorName = visitor.name;
+                        log.VisitorPhone = visitor.phone_no;
+                        log.VisitorNationalId = visitor.NationalIdCard;
+                        log.VisitorPassport = visitor.passport_no;
+                    }
+                    else
+                    {
+                        log.VisitorName = "Unknown";
+                        log.VisitorPhone = "Unknown";
+                        log.VisitorNationalId = 0;
+                        log.VisitorPassport = "Unknown";
+                    }
+                }
+            }
+
+            logEntries = logEntries.OrderByDescending(l => l.EntryTime).ToList();
+
+            GroupedLogs = logEntries
+                .GroupBy(l => l.GateName)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var gate in GroupedLogs.Keys)
+            {
+                CurrentPagePerGate[gate] = 1;
+            }
+
+            ApplyPaginationForEachGate();
+        }
+        else
+        {
+            logEntries.Clear();
+            GroupedLogs.Clear();
+            PagedLogs.Clear();
+            await js.InvokeVoidAsync("alert", $"An error occurred: {string.Join(", ", result.Errors)}");
+        }
+    }
+
+    private void ApplyPaginationForEachGate()
+    {
+        PagedLogs = GroupedLogs.ToDictionary(
+            group => group.Key,
+            group => group.Value.Skip((CurrentPagePerGate[group.Key] - 1) * LogsPerPage).Take(LogsPerPage).ToList()
+        );
+    }
+
+    private bool HasNextPageForGate(string gate) =>
+        CurrentPagePerGate.ContainsKey(gate) &&
+        (CurrentPagePerGate[gate] * LogsPerPage) < GroupedLogs[gate].Count;
+
+    private bool HasPreviousPageForGate(string gate) =>
+        CurrentPagePerGate.ContainsKey(gate) &&
+        CurrentPagePerGate[gate] > 1;
+
+    private void GoToNextPage(string gate)
+    {
+        if (HasNextPageForGate(gate))
+        {
+            CurrentPagePerGate[gate]++;
+            ApplyPaginationForEachGate();
+        }
+    }
+
+    private void GoToPreviousPage(string gate)
+    {
+        if (HasPreviousPageForGate(gate))
+        {
+            CurrentPagePerGate[gate]--;
+            ApplyPaginationForEachGate();
+        }
+    }
+}

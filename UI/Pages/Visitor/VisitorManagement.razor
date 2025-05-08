@@ -1,0 +1,140 @@
+﻿@page "/VisitorManagement"
+@inject VisitorConsumer VisitorConsumer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+
+<div class="container" dir="ltr">
+    <div class="text-center mt-5">
+        <h1 class="text-primary font-weight-bold text-left">Visitor Management</h1>
+        <p class="text-secondary text-left">Add a Visitor</p>
+    </div>
+
+    <div class="card shadow-lg p-4 mt-4">
+        <h4 class="text-center mb-4 text-dark text-left">Add a Visitor</h4>
+
+        <div class="form-group mt-3 text-left">
+            <label for="phone_no" class="font-weight-bold">Phone Number</label>
+            <input type="text" id="phone_no" class="form-control text-left" @bind="phone_no" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="name" class="font-weight-bold">Name</label>
+            <input type="text" id="name" class="form-control text-left" @bind="name" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label class="font-weight-bold">Identity Type</label>
+            <select class="form-control text-left" @bind="IdentityType">
+                <option value="">Select Identity Type</option>
+                <option value="Passport">Passport</option>
+                <option value="National ID Card">National ID Card</option>
+            </select>
+        </div>
+
+        @if (IdentityType == "National ID Card")
+        {
+            <div class="form-group mt-3 text-left">
+                <label for="NationalIdCard" class="font-weight-bold">National ID</label>
+                <input type="text" id="NationalIdCard" class="form-control text-left" @bind="NationalIdCardInput" />
+            </div>
+        }
+
+        @if (IdentityType == "Passport")
+        {
+            <div class="form-group mt-3 text-left">
+                <label for="passport_no" class="font-weight-bold">Passport Number</label>
+                <input type="text" id="passport_no" class="form-control text-left" @bind="passport_noInput" />
+            </div>
+        }
+
+        <div class="form-group mt-3 text-left">
+            <label for="E_mail" class="font-weight-bold">Email</label>
+            <input type="email" id="E_mail" class="form-control text-left" @bind="E_mail" />
+        </div>
+
+        <div class="form-group mt-3 text-left">
+            <label for="nationality" class="font-weight-bold">Nationality</label>
+            <input type="text" id="nationality" class="form-control text-left"
+                   readonly="@isNationalityReadOnly" @bind="nationality" />
+        </div>
+
+        <button type="button" class="btn btn-success mt-3 w-100" @onclick="AddVisitor">Add</button>
+    </div>
+
+    @if (showVehicleQuestion)
+    {
+        <div class="card shadow-lg p-4 mt-4">
+            <h4 class="text-center mb-4 text-dark text-left">Does the visitor own a vehicle?</h4>
+            <div class="d-flex justify-content-center">
+                <button type="button" class="btn btn-primary mx-2" @onclick="GoToAddVehicle">Yes</button>
+                <button type="button" class="btn btn-danger mx-2" @onclick="GoToSecurityDashboard">No</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string phone_no;
+    private string name;
+    private string E_mail;
+    private string nationality;
+    private string NationalIdCardInput;
+    private string passport_noInput;
+    private bool showVehicleQuestion = false;
+    private bool isNationalityReadOnly = false;
+
+    private string _identityType;
+    private string IdentityType
+    {
+        get => _identityType;
+        set
+        {
+            _identityType = value;
+            if (_identityType == "National ID Card")
+            {
+                nationality = "Egyptian";
+                isNationalityReadOnly = true;
+            }
+            else
+            {
+                nationality = "";
+                isNationalityReadOnly = false;
+            }
+        }
+    }
+
+    private async Task AddVisitor()
+    {
+        var newVisitor = new VisitorViewModel
+            {
+                name = name,
+                phone_no = phone_no,
+                E_mail = E_mail,
+                nationality = nationality,
+                NationalIdCard = IdentityType == "National ID Card" && long.TryParse(NationalIdCardInput?.Trim(), out var id) ? id : (long?)null,
+                passport_no = IdentityType == "Passport" ? passport_noInput : null
+            };
+
+        var result = await VisitorConsumer.AddVisitor(newVisitor);
+
+        if (!result.HasErrors && !string.IsNullOrEmpty(result.Data))
+        {
+            await js.InvokeVoidAsync("sessionStorage.setItem", "visitorToken", result.Data);
+            showVehicleQuestion = true;
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", $"Error: {string.Join(", ", result.Errors)}");
+        }
+    }
+
+    private void GoToAddVehicle()
+    {
+        NavigationManager.NavigateTo("/AddVehicle?fromVisitor=true");
+    }
+
+    private void GoToSecurityDashboard()
+    {
+        NavigationManager.NavigateTo("/SecurityDashboard");
+    }
+}

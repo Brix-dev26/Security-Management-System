@@ -1,0 +1,122 @@
+﻿@page "/UpdateGate"
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+@inject GateConsumer GateConsumer
+@inject SecurityStaffConsumer SecurityStaffConsumer
+@inject CampusConsumer CampusConsumer
+
+<h3 class="text-center text-primary mt-4">Update Security Staff Gate</h3>
+
+@if (isLoading)
+{
+    <p class="text-center text-secondary">Loading data...</p>
+}
+else
+{
+    <div class="container mt-4">
+        <div class="card p-3 shadow-sm">
+            <h5 class="text-secondary">Select the new gate:</h5>
+            <select class="form-control" @bind="SelectedGateId">
+                <option value="">-- Select a gate --</option>
+                @foreach (var gate in Gates)
+                {
+                    <option value="@gate.GateId">@gate.GateName</option>
+                }
+            </select>
+        </div>
+
+        <div class="text-center mt-4">
+            <button class="btn btn-success" @onclick="Update_Gate">Update Gate</button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<GateViewModel> Gates = new();
+    private int? SelectedGateId;
+    private SecurityStaffViewModel SecurityStaff;
+    private string CampusName = "";
+    private string CampusLocation = "";
+    private int CampusId;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await js.InvokeAsync<string>("sessionStorage.getItem", "authToken");
+
+        if (string.IsNullOrEmpty(token))
+        {
+            NavigationManager.NavigateTo("/SecurityStaffLogin");
+            return;
+        }
+
+        try
+        {
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            int secId = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "Sec_ID")?.Value ?? "0");
+
+            var result = await SecurityStaffConsumer.GetSecurityStaffById(secId);
+
+            if (result?.Data != null)
+            {
+                SecurityStaff = result.Data;
+                CampusId = SecurityStaff.CampusId;
+
+                await FetchCampusDetails(CampusId);
+                await LoadGates();
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/SecurityStaffLogin");
+            }
+        }
+        catch (Exception)
+        {
+            NavigationManager.NavigateTo("/SecurityStaffLogin");
+        }
+    }
+
+    private async Task FetchCampusDetails(int campusId)
+    {
+        var campus = await CampusConsumer.GetCampusById(campusId);
+        if (campus?.Data != null)
+        {
+            CampusName = campus.Data.CampusName;
+            CampusLocation = campus.Data.CampusLocation;
+        }
+    }
+
+    private async Task LoadGates()
+    {
+        var response = await GateConsumer.GetGatesByCampusId(CampusId);
+
+        if (response?.Data != null)
+        {
+            Gates = response.Data;
+        }
+
+        isLoading = false;
+    }
+
+    private async Task Update_Gate()
+    {
+        if (!SelectedGateId.HasValue)
+        {
+            await js.InvokeVoidAsync("alert", "Please select a gate before updating.");
+            return;
+        }
+
+        var updateResponse = await SecurityStaffConsumer.UpdateGateBySecurityId(SecurityStaff.Sec_ID, SelectedGateId.Value);
+        if (updateResponse?.Data == true)
+        {
+            await js.InvokeVoidAsync("alert", "Gate updated successfully.");
+            NavigationManager.NavigateTo("/SecurityStaffDashboard");
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "Gate update failed. Please try again.");
+        }
+    }
+}

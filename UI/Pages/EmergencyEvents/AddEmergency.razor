@@ -1,0 +1,164 @@
+﻿@page "/AddEmergencyEvent"
+@inject EmergencyEventConsumer EmergencyEventConsumer
+@inject SecurityStaffConsumer SecurityStaffConsumer
+@inject CampusConsumer CampusConsumer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize(Roles = "Computer Security Officer")]
+
+<div class="container" dir="ltr">
+    <div class="text-center mt-5">
+        <h1 class="text-primary font-weight-bold text-left">Emergency Event Management</h1>
+        <p class="text-secondary text-left">Add a New Emergency Event</p>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Security Staff Name</label>
+            <input class="form-control text-left" value="@SecurityName" readonly />
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Campus Name</label>
+            <input class="form-control text-left" value="@CampusName" readonly />
+        </div>
+    </div>
+
+    <div class="card shadow-lg p-4 mt-4">
+        <h5 class="text-center mb-4 text-dark text-left">Add Emergency Event</h5>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Report Date</label>
+            <input type="datetime-local" class="form-control text-left" @bind="ReportDate" />
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Location</label>
+            <input type="text" class="form-control text-left" @bind="Location" />
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Action Taken</label>
+            <input type="text" class="form-control text-left" @bind="ActionTaken" />
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Resolution Status</label>
+            <input type="checkbox" class="form-check-input" @bind="ResolutionStatus" />
+            <span>Resolved?</span>
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Cause Description</label>
+            <textarea class="form-control text-left" @bind="CauseDescription"></textarea>
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Number of People Involved</label>
+            <input type="number" class="form-control text-left" @bind="NumberOfInvolvedPeople" />
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Resolution Method</label>
+            <input type="text" class="form-control text-left" @bind="ResolutionMethod" />
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Names of Present Security Staff</label>
+            <input type="text" class="form-control text-left" @bind="Secutity_names" />
+        </div>
+
+        <div class="form-group text-left">
+            <label class="font-weight-bold">Names of Involved People</label>
+            <input type="text" class="form-control text-left" @bind="involvedpeople_names" />
+        </div>
+
+        <button class="btn btn-success mt-4 w-100" @onclick="AddEmergencyEventAsync">Add</button>
+    </div>
+</div>
+
+@code {
+    private int Sec_ID;
+    private int CampusId;
+    private string SecurityName;
+    private string CampusName;
+
+    private DateTime ReportDate = DateTime.Now;
+    private string Location;
+    private string ActionTaken;
+    private bool ResolutionStatus;
+    private string CauseDescription;
+    private int NumberOfInvolvedPeople;
+    private string ResolutionMethod;
+    private string Secutity_names;
+    private string involvedpeople_names;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSecurityData();
+    }
+
+    private async Task LoadSecurityData()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var token = await js.InvokeAsync<string>("sessionStorage.getItem", "authToken");
+
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            Sec_ID = int.Parse(jwtToken.Claims.FirstOrDefault(c => c.Type == "Sec_ID")?.Value ?? "0");
+
+            var userRole = jwtToken.Claims.FirstOrDefault(c => c.Type.EndsWith("UserRole", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            var securityResult = await SecurityStaffConsumer.GetSecurityStaffById(Sec_ID);
+
+            if (securityResult.Data != null)
+            {
+                SecurityName = securityResult.Data.Name;
+                CampusId = securityResult.Data.CampusId;
+
+                var campusResult = await CampusConsumer.GetCampusById(CampusId);
+                CampusName = campusResult.Data?.CampusName;
+            }
+        }
+        catch
+        {
+            await js.InvokeVoidAsync("alert", "Error loading security or campus data.");
+        }
+    }
+
+    private async Task AddEmergencyEventAsync()
+    {
+        var emergency = new EmergencyEventViewModel
+            {
+                Sec_ID = Sec_ID,
+                CampusId = CampusId,
+                ReportDate = ReportDate,
+                Location = Location,
+                ActionTaken = ActionTaken,
+                ResolutionStatus = ResolutionStatus,
+                CauseDescription = CauseDescription,
+                NumberOfInvolvedPeople = NumberOfInvolvedPeople,
+                ResolutionMethod = ResolutionMethod,
+                Secutity_names = Secutity_names,
+                involvedpeople_names = involvedpeople_names
+            };
+
+        var result = await EmergencyEventConsumer.AddEmergencyEvent(emergency);
+
+        if (!result.HasErrors)
+        {
+            await js.InvokeVoidAsync("alert", "Emergency event added successfully!");
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", $"Error: {string.Join(", ", result.Errors)}");
+        }
+    }
+
+    private void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/SecurityStaff/SecurityStaffLogin");
+    }
+}

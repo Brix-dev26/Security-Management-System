@@ -1,0 +1,167 @@
+﻿.rtl-layout {
+    direction:rtl;
+    text-align:right;
+}
+    .rtl-layout .mend-auto {
+        margin-right: auto !important;
+        margin-left: inherit !important;
+    }
+    .rtl-layout .mend-2 {
+        margin-right: 0.5rem !important;
+        margin-left: inherit !important;
+    }
+    .rtl-layout .mstart-2 {
+        margin-left: 0.5rem !important;
+        margin-right: inherit !important;
+    }
+    .rtl-layout .text-end {
+        text-align: left !important;
+    }
+    .rtl-layout .text-start {
+        text-align: right !important;
+    }
+    .rtl-layout .navbar-nav {
+        padding-left: unset;
+        padding-right: 0;
+    }
+    .rtl-layout .sidebar .nav-item .nav-link {
+        text-align: right;
+        padding: 0.75rem 1rem;
+    }
+    .rtl-layout .sidebar .nav-item .nav-link[data-toggle="collapse"]::after{
+        float:left !important;
+    }
+@media (max-width: 575.98px) {
+    .rtl-layout .sidebar .nav-item .collapse {
+        right: calc(6.5rem + 1.5rem / 2);
+    }
+}
+    .rtl-layout .fa-arrow-back::before {
+        /*content: "\f060";*/
+        content: "\f061";
+    }
+
+    .rtl-layout .topbar .dropdown .dropdown-menu {
+        width: auto;
+        right: -85px;
+    }
+
+    .rtl-layout .dropdown-item {
+        text-align: right;
+    }
+
+    .rtl-layout .actionList {
+        padding: 0px;
+        margin: 0px;
+    }
+
+        .rtl-layout .actionList li.titleItem {
+            background-color: transparent;
+            border: unset;
+            box-shadow: unset;
+            border-radius: unset;
+            font-size: 8pt;
+            font-weight: normal;
+            padding: 0px;
+            color: #858796;
+            margin: 0px;
+            text-align: center;
+        }
+
+        .rtl-layout .actionList li {
+            background-color: #E8EBF2;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            padding: 10px;
+            margin: 5px;
+            clear: both;
+            border: 1px solid #cacfe7;
+            overflow: hidden;
+        }
+
+            .rtl-layout .actionList li .actionListHeader {
+                width: auto;
+                margin-top: -10px;
+                margin-left: -10px;
+                margin-right: -10px;
+                margin-bottom: 10px;
+                padding: 5px;
+                text-align: center;
+                background-color: #14275a;
+                color: #f6c23e;
+                font-size: 9pt;
+                font-weight: bold;
+            }
+
+            .rtl-layout .actionList li div.actionListText {
+                font-size: 10pt;
+                font-weight: bold;
+                display: block;
+                margin-right: 30px;
+                margin-left: unset;
+            }
+
+                .rtl-layout .actionList li div.actionListText .actionListAction {
+                    display: inline-block;
+                    position: absolute;
+                    right: 0px;
+                    left: unset;
+                    font-weight: normal;
+                    margin-right: 10px;
+                    margin-left: unset;
+                    margin-top: -10px;
+                }
+
+                .rtl-layout .actionList li div.actionListText .actionListAction2 {
+                    display: inline-block;
+                    position: absolute;
+                    right: 30px;
+                    left: unset;
+                    font-weight: normal;
+                    margin-right: 10px;
+                    margin-left: unset;
+                }
+
+                .rtl-layout .actionList li div.actionListText .actionListAction a {
+                    cursor: pointer;
+                }
+
+                    .rtl-layout .actionList li div.actionListText .actionListAction a i {
+                        margin-right: unset;
+                    }
+
+                .rtl-layout .actionList li div.actionListText .form-group label {
+                    font-size: 10pt;
+                    font-weight: normal;
+                }
+
+.rtl-layout .border-Between {
+    border-left: 1px solid #e4e7ee;
+}
+
+    .rtl-layout .border-Between:last-child {
+        border-left: 0px none #e4e7ee;
+    }
+
+.rtl-layout .fa-angle-left {
+    float: left;
+    margin-top: 4px;
+}
+.rtl-layout .btn-light {
+    text-align: left !important;
+    float: left;
+}
+
+.rtl-layout .panel-heading .btn-outline-primary {
+    float: left;
+}
+.rtl-layout .btn-rtl {
+    float: left !important; 
+}
+.rtl-layout .modify .btn-primary{
+    float:left;
+
+}
+.rtl-layout .modify-filter .btn-outline-info {
+    float:left;
+}

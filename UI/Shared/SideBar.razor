@@ -1,0 +1,74 @@
+﻿@inject ReserverTokenAuthenticationStateProvider TokenProvider
+@using UI.Helpers
+@inject NavigationManager Navigation
+
+@if (IsLoggedIn)
+{
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="MainSidebar">
+        <li class="nav-item mt-2">
+            <a class="nav-link" href="#" data-toggle="collapse" data-target="#MainMenu" aria-expanded="false" aria-controls="MainSidebar">
+                <i class="far fa-edit"></i>
+                <span>Services</span>
+            </a>
+
+            <div id="MainMenu" class="collapsed collapse show" aria-labelledby="headingTwo" data-parent="#MainSidebar">
+                <div class="bg-blue py-2 collapse-inner rounded">
+
+                    <NavLink class="collapse-item" href="/VisitorManagement">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add Visitor</span>
+                    </NavLink>
+
+                    <NavLink class="collapse-item" href="/AddVehicle">
+                        <i class="fas fa-car"></i>
+                        <span>Add New Vehicle for Visitor</span>
+                    </NavLink>
+
+                    <AuthorizeView Roles="Computer Security Officer">
+                        <Authorized>
+                            <NavLink class="collapse-item" href="/AddSecurityStaff">
+                                <i class="fas fa-user-shield"></i>
+                                <span>Add Security Staff</span>
+                            </NavLink>
+
+                            <NavLink class="collapse-item" href="/AddEmergencyEvent">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Add Emergency Event</span>
+                            </NavLink>
+
+                            <NavLink class="collapse-item" href="/LogEntry">
+                                <i class="fas fa-book"></i>
+                                <span>Add Academic Log Entry</span>
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="Security Manager">
+                        <Authorized>
+                            <NavLink class="collapse-item" href="/LogHistory">
+                                <i class="fas fa-history"></i>
+                                <span>Entry and Exit Report</span>
+                            </NavLink>
+
+                            <NavLink class="collapse-item" href="/Isblacklisted">
+                                <i class="fas fa-user-secret"></i>
+                                <span>Search in Blacklist</span>
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
+
+                </div>
+            </div>
+        </li>
+    </ul>
+}
+
+@code {
+    private bool IsLoggedIn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await TokenProvider.GetTokenAsync();
+        IsLoggedIn = !string.IsNullOrEmpty(token);
+    }
+}

@@ -1,0 +1,25 @@
+﻿.ltr-layout {
+    direction:ltr;
+}
+.mend-auto {
+    margin-left: auto !important;
+    margin-right: inherit !important;
+}
+.mend-2 {
+    margin-left: 0.5rem !important;
+    margin-right: inherit !important;
+}
+.mstart-2 {
+    margin-right: 0.5rem !important;
+    margin-left: inherit !important;
+}
+.text-end {
+    text-align:right !important;
+}
+.text-start {
+    text-align: left !important;
+}
+.fa-arrow-back::before {
+    
+    content: "\f060";
+}

@@ -99,7 +99,7 @@ Before running this project, ensure that you have the following installed:
 
 ## Contributing
 
-We appreciate community contributions! Here's how you can help:
+I appreciate community contributions! Here's how you can help:
 
 1. Fork the repository.
 2. Create a new feature branch: `git checkout -b feature/my-new-feature`.

@@ -1,115 +1,138 @@
-# Security Management System
+# Security Management System 🛡️
 
-## Overall
+![GitHub release](https://img.shields.io/github/release/Brix-dev26/Security-Management-System.svg) ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-The **Security Management System** is a robust web-based platform designed to streamline and secure the management of campus security operations. It offers a centralized interface for administrators and security staff to handle gate monitoring, emergency event tracking, and log management. The system emphasizes secure authentication, role-based access control, and scalable architecture.
+Welcome to the **Security Management System** repository! This project is a web-based application designed to enhance campus security operations. It provides a robust platform for managing various security-related tasks effectively.
 
-## Master Branch (Blazor WebAssembly App)
+## Table of Contents
 
-1. Built using **Blazor WebAssembly** (.NET).
-2. Login system for both Security Staff and Admins with JWT-based authentication.
-3. Role-based access control (e.g., only "Computer Security Officer" can trigger emergency events).
-4. Dynamic dropdowns for selecting campus and gate to filter and manage security logs.
-5. Responsive UI for managing campuses, gates, logs, and security personnel.
+- [Introduction](#introduction)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+- [Releases](#releases)
 
-## Backend API Branch (ASP.NET Core Web API)
+## Introduction
 
-1. Developed using **ASP.NET Core Web API**.
-2. Structured using layered architecture: Controller → Service → Repository.
-3. Entity Framework Core for database access and migrations.
-4. Supports all core operations: CRUD for staff, campus, gates, and logs.
-5. JWT token generation and validation using Microsoft Identity libraries.
-
-## Technologies Used
-
-### Programming Languages:
-1. **C#** (.NET for frontend and backend)
-2. **HTML/CSS** (Blazor components)
-
-### Frameworks & Libraries:
-1. **Blazor WebAssembly** – For the client-side application.
-2. **ASP.NET Core Web API** – Backend RESTful services.
-3. **Entity Framework Core** – ORM for database interaction.
-4. **Blazored.LocalStorage** – For JWT token persistence on client side.
-5. **Microsoft.IdentityModel.Tokens** – For token security.
-6. **Bootstrap** – Frontend styling and layout.
-
-### Tools:
-1. **Visual Studio 2022** – Main development environment.
-2. **Postman** – For testing API endpoints.
-3. **SQL Server Management Studio (SSMS)** – For managing the database.
-4. **Draw.io / Microsoft Visio** – For creating UML diagrams and ERDs.
-5. **Git & GitHub** – Version control and collaboration.
-
+In today’s world, ensuring safety on campuses is crucial. Our Security Management System aims to streamline security operations, making it easier for staff to manage and respond to security needs. The system includes role-based login, visitor and vehicle log tracking, and emergency event reporting, among other features.
 
 ## Features
 
-- ✅ JWT-secured login for Admins and Security Staff  
-- ✅ Role-based authorization to protect sensitive features  
-- ✅ Emergency event creation limited to authorized roles  
-- ✅ Campus and gate assignment for security personnel  
-- ✅ Visitor and vehicle logging  
-- ✅ Real-time filtering of log entries by date, gate, and campus  
-- ✅ Clean separation of concerns using services and repositories
+- **Role-Based Login**: Users can access the system based on their roles, ensuring that sensitive information is only available to authorized personnel.
+  
+- **Visitor and Vehicle Log Tracking**: Keep track of all visitors and vehicles entering the campus. This feature helps maintain a secure environment and provides a historical log for reference.
+
+- **Emergency Event Reporting**: Quickly report emergencies through a dedicated interface, allowing for immediate action and response.
+
+- **CRUD Operations**: Manage campuses, gates, and security staff with create, read, update, and delete operations.
+
+- **User-Friendly Interface**: Built with Blazor WebAssembly, the application provides a smooth and responsive user experience.
+
+- **Secure Authentication**: The system uses JWT for secure authentication, ensuring that user data remains protected.
+
+## Technologies Used
+
+This project leverages several technologies to provide a robust and scalable application:
+
+- **ASP.NET Core**: The backend is built using ASP.NET Core Web API, providing a powerful and flexible server-side framework.
+
+- **Blazor WebAssembly**: The frontend is developed using Blazor, allowing for rich web applications with C#.
+
+- **Entity Framework**: This ORM tool simplifies database interactions and management.
+
+- **JWT Authentication**: JSON Web Tokens are used for secure user authentication.
 
 ## Installation
 
-### Prerequisites
+To get started with the Security Management System, follow these steps:
 
-Before running this project, ensure that you have the following installed:
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Brix-dev26/Security-Management-System.git
+   ```
 
-- **.NET 6.0 SDK** (or later)
-- **SQL Server** (or use a local SQL Server instance)
+2. **Navigate to the Project Directory**:
+   ```bash
+   cd Security-Management-System
+   ```
 
-### Setup
-
-1. **Clone the repository**:
-   - Run the following command to clone the repository:
+3. **Install Dependencies**:
+   - For the backend, navigate to the API project folder and run:
      ```bash
-     git clone https://github.com/your-username/security-system-management.git
-     cd security-system-management
+     dotnet restore
      ```
-
-2. **Restore the NuGet packages**:
-   - Run the following command to restore the NuGet packages:
+   - For the frontend, navigate to the Blazor project folder and run:
      ```bash
      dotnet restore
      ```
 
-3. **Set up the database**:
-   - Modify `appsettings.json` to match your SQL Server credentials.
-   - Ensure your connection string is correctly set in the `appsettings.json` file.
-
-4. **Apply migrations to your database**:
-   - Run the following command to apply migrations:
+4. **Set Up the Database**:
+   - Update the connection string in the `appsettings.json` file.
+   - Run the migrations to set up the database:
      ```bash
      dotnet ef database update
      ```
 
-5. **Build and run the application**:
-   - Run the following command to build and start the application:
+5. **Run the Application**:
+   - Start the backend server:
      ```bash
      dotnet run
+     ```
+   - Start the frontend:
+     ```bash
+     dotnet run
+     ```
 
-## Documentation
+## Usage
 
-📄 **All system diagrams, workflows, and development documentation** are available within the project folder:
+After installation, you can access the application through your web browser. The default URL is `http://localhost:5000`. 
 
-- The **ERD** (Entity Relationship Diagram) can be found in the `docs` folder within the project directory.
+### Login
+
+1. Use your credentials to log in based on your assigned role.
+2. Navigate through the dashboard to access various features.
+
+### Tracking Visitors and Vehicles
+
+- Use the visitor log feature to add new entries.
+- Access vehicle logs to monitor and manage campus traffic.
+
+### Reporting Emergencies
+
+- Click on the emergency reporting button to fill out the necessary details.
+- Submit the report for immediate attention.
 
 ## Contributing
 
-I appreciate community contributions! Here's how you can help:
+We welcome contributions from the community! If you would like to contribute, please follow these steps:
 
 1. Fork the repository.
-2. Create a new feature branch: `git checkout -b feature/my-new-feature`.
-3. Commit your changes: `git commit -am 'Add some feature'`.
-4. Push to the branch: `git push origin feature/my-new-feature`.
-5. Submit a pull request.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them.
+4. Push your changes to your forked repository.
+5. Create a pull request.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
-📬 **Project Contact**  
-Mohamed Amr  
-[My LinkedIn](https://www.linkedin.com/in/mohamed-fathy-97a916351/)  
-moamrfathytawfik@gmail.com
+For questions or support, feel free to reach out:
+
+- **Email**: support@example.com
+- **GitHub**: [Brix-dev26](https://github.com/Brix-dev26)
+
+## Releases
+
+You can find the latest releases of the Security Management System [here](https://github.com/Brix-dev26/Security-Management-System/releases). Please download and execute the necessary files to get started with the latest features and updates.
+
+For more information about the releases, check the **Releases** section in the GitHub repository.
+
+---
+
+Thank you for checking out the Security Management System! Your feedback and contributions are highly appreciated.

